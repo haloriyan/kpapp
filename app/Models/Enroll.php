@@ -10,7 +10,7 @@ class Enroll extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'course_id', 'coupon_id', 'payment_status',
+        'user_id', 'course_id', 'coupon_id', 'payment_status', 'is_completed'
     ];
 
     public function course() {
@@ -18,5 +18,8 @@ class Enroll extends Model
     }
     public function user() {
         return $this->belongsTo(User::class, 'user_id');
+    }
+    public function paths() {
+        return $this->hasMany(Path::class, 'enroll_id');
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\Enroll;
 use App\Models\Material;
+use App\Models\Path;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -47,7 +48,7 @@ class PageController extends Controller
             ['user_id', $user->id],
             ['payment_status', 'PAID'],
         ])
-        ->with(['course.materials'])
+        ->with(['course.materials', 'paths'])
         ->get();
 
         return response()->json([
@@ -55,9 +56,35 @@ class PageController extends Controller
         ]);
     }
     public function learn(Request $request) {
-        $enroll = Enroll::where('id', $request->enroll_id)
-        ->with(['user', 'course.materials'])
+        $e = Enroll::where('id', $request->enroll_id);
+        $enroll = $e->with(['user', 'course.materials', 'paths'])
         ->first();
+
+        // check paths
+        if ($request->hit_path) {
+            $checkPath = Path::where([
+                ['user_id', $enroll->user_id],
+                ['course_id', $enroll->course_id],
+                ['enroll_id', $enroll->id],
+                ['material_id', $request->material_id],
+            ])->first();
+
+            if ($checkPath == null) {
+                $hittingPath = Path::create([
+                    'user_id' => $enroll->user_id,
+                    'course_id' => $enroll->course_id,
+                    'enroll_id' => $enroll->id,
+                    'material_id' => $request->material_id,
+                ]);
+            }
+
+            $paths = Path::where('enroll_id', $enroll->id)->get();
+            if ($enroll->course->materials->count() == $paths->count()) {
+                $e->update([
+                    'is_completed' => true,
+                ]);
+            }
+        }
 
         return response()->json([
             'enroll' => $enroll,

@@ -132,7 +132,8 @@ class CourseController extends Controller
                 'coupon_id' => $coupon->id,
                 'course_id' => $id,
                 'user_id' => $user->id,
-                'payment_status' => "PAID"
+                'payment_status' => "PAID",
+                'is_completed' => false,
             ]);
 
             $message = "Berhasil enroll pelatihan";
@@ -142,6 +143,22 @@ class CourseController extends Controller
         return response()->json([
             'status' => $status,
             'message' => $message,
+        ]);
+    }
+    public function dashboard($courseID) {
+        $course = Course::where('id', $courseID)->first();
+        $enrolls = Enroll::where('course_id', $courseID)->get();
+        $completed = [];
+        foreach ($enrolls as $enroll) {
+            if ($enroll->is_completed) {
+                array_push($completed, $enroll);
+            }
+        }
+
+        return response()->json([
+            'course' => $course,
+            'enrolls' => $enrolls,
+            'completed' => $completed,
         ]);
     }
 }

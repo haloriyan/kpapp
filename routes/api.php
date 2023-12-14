@@ -42,6 +42,7 @@ Route::group(['prefix' => "course"], function () {
         Route::post('update', "CourseController@update");
         Route::post('delete', "CourseController@delete");
         Route::post('enroll', "CourseController@enroll");
+        Route::post('dashboard', "CourseController@dashboard");
         Route::post('/', "CourseController@getByID");
     });
 
