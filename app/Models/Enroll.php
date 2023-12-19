@@ -10,7 +10,7 @@ class Enroll extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'course_id', 'coupon_id', 'payment_status', 'is_completed'
+        'user_id', 'course_id', 'coupon_id', 'payment_status', 'is_completed', 'has_answered_exam'
     ];
 
     public function course() {

@@ -9,6 +9,7 @@ use App\Models\Enroll;
 use App\Models\Material;
 use App\Models\Path;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -16,7 +17,7 @@ class PageController extends Controller
 {
     public function home(Request $request) {
         $categories = Category::orderBy('priority', 'DESC')->orderBy('updated_at', 'DESC')->get();
-        $courses = Course::orderBy('created_at', 'DESC')->take(8)->get();
+        $courses = Course::orderBy('created_at', 'DESC')->with(['materials'])->take(8)->get();
 
         return response()->json([
             'status' => 200,
@@ -48,7 +49,7 @@ class PageController extends Controller
             ['user_id', $user->id],
             ['payment_status', 'PAID'],
         ])
-        ->with(['course.materials', 'paths'])
+        ->with(['course.materials', 'course.quiz', 'paths'])
         ->get();
 
         return response()->json([
@@ -98,5 +99,26 @@ class PageController extends Controller
         return response()->stream(function () use ($stream) {
             $stream->start();
         });
+    }
+    public function adminDashboard() {
+        $startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        $enroll_count = Enroll::whereBetween('created_at', [$startDate, $endDate])->get('id')->count();
+
+        return response()->json([
+            'enroll_count' => $enroll_count,
+        ]);
+    }
+    public function search(Request $request) {
+        $courses = Course::where([
+            ['title', 'LIKE', '%'.$request->q.'%']
+        ])
+        ->with(['materials'])
+        ->paginate(25);
+
+        return response()->json([
+            'courses' => $courses,
+        ]);
     }
 }

@@ -134,6 +134,7 @@ class CourseController extends Controller
                 'user_id' => $user->id,
                 'payment_status' => "PAID",
                 'is_completed' => false,
+                'has_answered_exam' => false,
             ]);
 
             $message = "Berhasil enroll pelatihan";

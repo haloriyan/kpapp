@@ -26,10 +26,30 @@ Route::group(['prefix' => "course"], function () {
     Route::post('create', "CourseController@create");
     Route::post('search', "CourseController@search");
 
+    Route::group(['prefix' => "{id}/event"], function () {
+        Route::post('/', "EventController@get");
+    });
+    Route::group(['prefix' => "{id}/certificate"], function () {
+        Route::post('put', "CertificateController@put");
+        Route::post('update', "CertificateController@update");
+        Route::post('/', "CertificateController@get");
+    });
+
     Route::group(['prefix' => "{id}/media"], function () {
-        Route::post('store', "MediaController@store");
+        Route::post('put', "MediaController@put");
         Route::post('delete', "MediaController@delete");
         Route::get('/', "MediaController@getByCourse");
+    });
+
+    Route::group(['prefix' => "{id}/exam"], function () {
+        Route::group(['prefix' => "question"], function () {
+            Route::post('store', "ExamController@storeQuestion");
+            Route::post('delete', "ExamController@deleteQuestion");
+        });
+        
+        Route::post('submit-answer', "ExamController@submitAnswer");
+        Route::post('delete', "ExamController@delete");
+        Route::post('/', "ExamController@getQuestions");
     });
 
     Route::group(['prefix' => "{id}/material"], function () {
@@ -51,8 +71,17 @@ Route::group(['prefix' => "course"], function () {
 
 Route::group(['prefix' => "page"], function () {
     Route::post('home', "PageController@home");
+    Route::post('search', "PageController@search");
     Route::post('category', "PageController@category");
     Route::post('my-course', "PageController@myCourse");
     Route::post('learn', "PageController@learn");
     Route::get('stream/{materialID}', "PageController@stream");
+
+    Route::group(['prefix' => "admin"], function () {
+        Route::post('dashboard', "PageController@adminDashboard");
+    });
+});
+
+Route::group(['prefix' => "statistic"], function () {
+    Route::post('enroll', "StatisticController@enroll");
 });

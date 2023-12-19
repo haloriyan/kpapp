@@ -22,4 +22,13 @@ class Course extends Model
     public function enrolls() {
         return $this->hasMany(Enroll::class, 'course_id');
     }
+    public function exam_questions() {
+        return $this->hasMany(Question::class, 'course_id');
+    }
+    public function certificate() {
+        return $this->hasOne(Certificate::class, 'course_id');
+    }
+    public function quiz() {
+        return $this->hasOne(Quiz::class, 'course_id');
+    }
 }
