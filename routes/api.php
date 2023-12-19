@@ -7,6 +7,7 @@ Route::group(['prefix' => "user"], function () {
     Route::post('login', "UserController@login");
     Route::post('register', "UserController@register");
     Route::post('logout', "UserController@logout");
+    Route::post('update', "UserController@update");
 
     Route::get('/', "UserController@retrieve");
 });

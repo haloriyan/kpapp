@@ -70,4 +70,16 @@ class UserController extends Controller
 
         return response()->json(['message' => "ok"]);
     }
+    public function update(Request $request) {
+        $data = User::where('token', $request->token);
+        $updateData = $data->update([
+            'name' => $request->name,
+        ]);
+        $user = $data->first();
+
+        return response()->json([
+            'message' => "Berhasil memperbarui profil",
+            'user' => $user,
+        ]);
+    }
 }
