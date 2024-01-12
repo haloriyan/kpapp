@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    public function auth(Request $request) {
+        $user = User::where('token', $request->token)->first();
+
+        return response()->json([
+            'user' => $user,
+        ]);
+    }
     public function retrieve(Request $request) {
         $users = User::where('role', 'user')->orderBy('created_at', 'DESC')->paginate($request->limit);
 

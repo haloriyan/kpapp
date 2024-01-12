@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('enrolls', function (Blueprint $table) {
+        Schema::create('enroll_paths', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('enroll_id')->unsigned()->index();
+            $table->foreign('enroll_id')->references('id')->on('enrolls')->onDelete('cascade');
             $table->bigInteger('user_id')->unsigned()->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->bigInteger('batch_id')->unsigned()->index()->nullable();
-            $table->foreign('batch_id')->references('id')->on('batches')->onDelete('set null');
             $table->bigInteger('course_id')->unsigned()->index();
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
-            $table->bigInteger('coupon_id')->unsigned()->index()->nullable();
-            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
-
-            $table->string('payment_status');
+            $table->bigInteger('modul_id')->unsigned()->index();
+            $table->foreign('modul_id')->references('id')->on('moduls')->onDelete('cascade');
+            $table->boolean('is_complete');
             $table->timestamps();
         });
     }
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('enrolls');
+        Schema::dropIfExists('enroll_paths');
     }
 };

@@ -39,7 +39,7 @@ class CertificateController extends Controller
         $file = $request->file('file');
         $fileName = $file->getClientOriginalName();
 
-        if ($certificate != null) {
+        if ($certificate == null) {
             $saveData = Certificate::create([
                 'course_id' => $request->course_id,
                 'filename' => $fileName,

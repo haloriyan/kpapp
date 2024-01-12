@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\CouponExport;
 use App\Exports\EnrollExport;
+use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Enroll;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ExportController extends Controller
@@ -50,5 +53,34 @@ class ExportController extends Controller
         ])->setPaper('a4', 'landscape')->set_option('isRemoteEnabled', true);
 
         return $pdf->stream();
+    }
+    public function coupon() {
+        $coupons = Coupon::orderBy('created_at', 'DESC')->get();
+        foreach ($coupons as $c => $coup) {
+            $forCourses = json_decode($coup->for_courses_id);
+            $theCourses = [];
+
+            foreach ($forCourses as $fc) {
+                $course = Course::where('id', $fc)->first(['id','title']);
+                array_push($theCourses, $course);
+            }
+
+            $coupons[$c]['courses'] = $theCourses;
+        }
+
+        $now = Carbon::now();
+        $filename = "Kupon Pelatihan - Exported on " . $now->format('d M Y_H:i:s') . '.xlsx';
+
+        return Excel::download(new CouponExport([
+            'datas' => $coupons,
+        ]), $filename);
+    }
+
+    public function viewDocument($path) {
+        $path = base64_decode($path);
+        Log::info($path);
+        $content = file_get_contents($path);
+
+        return $content;
     }
 }

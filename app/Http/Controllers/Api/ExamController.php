@@ -89,4 +89,36 @@ class ExamController extends Controller
             'message' => "ok"
         ]);
     }
+    public function syncCounter($courseID, Request $request) {
+        $c = Course::where('id', $courseID)->update([
+            'minimum_correct_answer' => $request->count,
+        ]);
+
+        return response()->json(['ok']);
+    }
+    public function answer($courseID) {
+        $course = Course::where('id', $courseID)
+        ->with(['enrolls.user', 'quiz.questions'])
+        ->first();
+
+        $answersRaw = Answer::where('quiz_id', $course->quiz->id)->get();
+
+        $users = [];
+        foreach ($course->enrolls as $enroll) {
+            $u = $enroll->user;
+            $uAnswers = [];
+            foreach ($answersRaw as $ans) {
+                if ($ans->user_id == $u->id) {
+                    array_push($uAnswers, $ans);
+                }
+            }
+            $u->answers = $uAnswers;
+            array_push($users, $u);
+        }
+
+        return response()->json([
+            'course' => $course,
+            'users' => $users,
+        ]);
+    }
 }

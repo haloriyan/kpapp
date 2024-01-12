@@ -6,10 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Enroll;
+use App\Models\EnrollPath;
 use App\Models\Material;
+use App\Models\MaterialVideo;
+use App\Models\Modul;
+use App\Models\ModulVideo;
 use App\Models\Path;
+use App\Models\Presence;
+use App\Models\QuestionAnswer;
+use App\Models\Thread;
+use App\Models\ThreadVote;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -56,7 +65,52 @@ class PageController extends Controller
             'enrolls' => $enrolls,
         ]);
     }
+    public function enroll(Request $request) {
+        $e = Enroll::where('id', $request->enroll_id);
+        $enroll = $e->with([
+            'user', 'batch',
+            'course.moduls.videos',
+            'course.moduls.documents',
+            'course.quiz.questions'
+        ])
+        ->first();
+
+        // presence
+        $presences = Presence::where('enroll_id', $enroll->id)->orderBy('presence_date', 'ASC')->get();
+        $paths = EnrollPath::where('enroll_id', $enroll->id)->orderBy('id', 'ASC')->get();
+        $answers = QuestionAnswer::where([
+            ['user_id', $enroll->user_id],
+            ['quiz_id', $enroll->course->quiz->id]
+        ])->get();
+
+        return response()->json([
+            'enroll' => $enroll,
+            'presences' => $presences,
+            'paths' => $paths,
+            'answers' => $answers,
+        ]);
+    }
     public function learn(Request $request) {
+        $enrollID = $request->enroll_id;
+        $modulID = $request->modul_id;
+
+        $modul = Modul::where('id', $modulID)->with(['videos', 'documents'])->first();
+
+        return response()->json([
+            'modul' => $modul
+        ]);
+    }
+    public function doneLearn(Request $request) {
+        $path = EnrollPath::where([
+            ['modul_id', $request->modul_id],
+            ['enroll_id', $request->enroll_id],
+        ])->update([
+            'is_complete' => true,
+        ]);
+
+        return response()->json(['ok']);
+    }
+    public function learns(Request $request) {
         $e = Enroll::where('id', $request->enroll_id);
         $enroll = $e->with(['user', 'course.materials', 'paths'])
         ->first();
@@ -91,9 +145,9 @@ class PageController extends Controller
             'enroll' => $enroll,
         ]);
     }
-    public function stream($materialID) {
-        $material = Material::where('id', $materialID)->first();
-        $videoPath = public_path('storage/video_materials/' . $material->filename);
+    public function stream($videoID) {
+        $video = ModulVideo::where('id', $videoID)->first();
+        $videoPath = public_path('storage/video_materials/' . $video->filename);
 
         $stream = new \App\Http\VideoStream($videoPath);
         return response()->stream(function () use ($stream) {
@@ -119,6 +173,45 @@ class PageController extends Controller
 
         return response()->json([
             'courses' => $courses,
+        ]);
+    }
+    public function forum($courseID, Request $request) {
+        $course = Course::find($courseID);
+        $user = User::where('token', $request->token)->first();
+        $ableToPost = false;
+        
+        $threads = Thread::where('course_id', $course->id)
+        ->with(['user'])
+        ->orderBy('created_at', 'DESC')->paginate(25);
+
+        if ($user != null) {
+            $enrolls = Enroll::where([
+                ['user_id', $user->id],
+                ['course_id', $courseID]
+            ])->get(['id']);
+
+            if ($enrolls->count() > 0) {
+                $ableToPost = true;
+            }
+
+            foreach ($threads as $t => $thread) {
+                $threads[$t]->i_have_upvoted = false;
+                $threads[$t]->i_have_downvoted = false;
+    
+                $baseFilter = [
+                    ['user_id', $user->id],
+                    ['thread_id', $thread->id]
+                ];
+
+                $threads[$t]->i_have_upvoted = ThreadVote::where([...$baseFilter, ['type', 'upvote']])->get(['id'])->count() > 0;
+                $threads[$t]->i_have_downvoted = ThreadVote::where([...$baseFilter, ['type', 'downvote']])->get(['id'])->count() > 0;
+            }
+        }
+
+        return response()->json([
+            'course' => $course,
+            'threads' => $threads,
+            'able_to_post' => $ableToPost,
         ]);
     }
 }

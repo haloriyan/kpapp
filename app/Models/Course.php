@@ -10,7 +10,8 @@ class Course extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'title', 'description', 'cover_image', 'cover_video', 'price', 'category'
+        'user_id', 'title', 'description', 'cover_image', 'cover_video', 'price', 'category', 'presence_day_count',
+        'start_date', 'end_date', 'minimum_completing_modul', 'minimum_correct_answer'
     ];
 
     public function medias() {
@@ -18,6 +19,9 @@ class Course extends Model
     }
     public function materials() {
         return $this->hasMany(Material::class, 'course_id');
+    }
+    public function moduls() {
+        return $this->hasMany(Modul::class, 'course_id');
     }
     public function enrolls() {
         return $this->hasMany(Enroll::class, 'course_id');
