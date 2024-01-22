@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\Enroll;
 use App\Models\EnrollPath;
+use App\Models\Event;
 use App\Models\Material;
 use App\Models\MaterialVideo;
 use App\Models\Modul;
@@ -25,13 +26,18 @@ use Illuminate\Support\Facades\Log;
 class PageController extends Controller
 {
     public function home(Request $request) {
+        $now = Carbon::now();
         $categories = Category::orderBy('priority', 'DESC')->orderBy('updated_at', 'DESC')->get();
         $courses = Course::orderBy('created_at', 'DESC')->with(['materials'])->take(8)->get();
+        $events = Event::where('start_date', '>=', $now->format('Y-m-d'))
+        ->with(['course'])
+        ->get();
 
         return response()->json([
             'status' => 200,
             'categories' => $categories,
             'courses' => $courses,
+            'events' => $events,
         ]);
     }
     public function category(Request $request) {
@@ -212,6 +218,32 @@ class PageController extends Controller
             'course' => $course,
             'threads' => $threads,
             'able_to_post' => $ableToPost,
+        ]);
+    }
+    public function event(Request $request) {
+        $token = $request->token;
+        $event = Event::where('id', $request->id)->with(['course', 'users'])->first();
+        $ableToJoin = true;
+
+        if ($event->join_rule == "private") {
+            $ableToJoin = false;
+            $user = User::where('token', $token)->first();
+            if ($user != null) {
+                $enrolls = Enroll::where('course_id', $event->course_id)->with(['user'])->get();
+                $enrollIDs = [];
+                foreach ($enrolls as $enr) {
+                    array_push($enrollIDs, $enr->user->id);
+                }
+
+                if (in_array($user->id, $enrollIDs)) {
+                    $ableToJoin = true;
+                }
+            }
+        }
+
+        return response()->json([
+            'event' => $event,
+            'able_to_join' => $ableToJoin,
         ]);
     }
 }

@@ -31,6 +31,10 @@ Route::group(['prefix' => "course"], function () {
 
     Route::group(['prefix' => "{id}/event"], function () {
         Route::post('/', "EventController@get");
+        Route::post('create', "EventController@create");
+        Route::post('update', "EventController@update");
+        Route::post('join', "EventController@join");
+        Route::post('{eventID}', "EventController@getByID");
     });
     Route::group(['prefix' => "{id}/certificate"], function () {
         Route::post('put', "CertificateController@put");
@@ -103,6 +107,7 @@ Route::group(['prefix' => "page"], function () {
     Route::post('category', "PageController@category");
     Route::post('my-course', "PageController@myCourse");
     Route::post('enroll', "PageController@enroll");
+    Route::post('event', "PageController@event");
     Route::post('learn', "PageController@learn");
     Route::post('learn/done', "PageController@doneLearn");
     Route::get('stream/{materialID}', "PageController@stream");
